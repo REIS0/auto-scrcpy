@@ -5,15 +5,6 @@ use std::sync::mpsc::{self, Receiver, Sender};
 use std::sync::{Arc, RwLock};
 use std::{process::Command, thread, time::Duration};
 
-/*
-TESTES:
-1. Colocar dispositivo e abrir scrcpy
-2. Colocar outro dispositivo e abrir scrcpy
-3. Remover dispositivo e fechar scrcpy
-4. Checar lista de dispositivos atualizou
-5. Reiniciar dispositivo
-6. Rodar comandos no shell e verificar que threads estao fechando
-*/
 const THREAD_WAIT: u64 = 5;
 
 enum ShellComandos {
@@ -92,7 +83,7 @@ fn scrcpy_creator(
                     *c = ShellComandos::Nothing;
                 }
                 ShellComandos::RestartDevice => {
-                    // TODO: travar a outra thread ao fazer isso
+                    // TODO: lock other threads
                     let device = device_receiver.recv().unwrap();
                     if current_devices.contains(&device) {
                         let mut p = processes.remove(&device).unwrap();
