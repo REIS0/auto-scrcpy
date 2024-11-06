@@ -2,20 +2,19 @@
 A tool to help with some tasks on my job.
 
 ## Commands
+List the current devices running scrcpy.
 ```
 devices
 ```
-List the current devices running scrcpy.
-
+Restart the process for a specific device.
 ```
 restart [serial number]
 ```
-Restart the process for a specific device.
 
+Finish all process and quit the execution.
 ```
 quit
 ```
-Finish all process and quit the execution.
 
 ## Build
 ```

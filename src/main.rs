@@ -71,6 +71,7 @@ fn scrcpy_creator(
     println!("Starting scrcpy loop...");
     let mut processes: HashMap<String, Child> = HashMap::new();
     let mut current_devices: HashSet<String> = HashSet::new();
+    let mut command_ran = false;
     loop {
         match comando.try_read() {
             Ok(value) => match *value {
@@ -79,11 +80,9 @@ fn scrcpy_creator(
                         print!("{device} ");
                     }
                     println!();
-                    let mut c = comando.write().unwrap();
-                    *c = ShellComandos::Nothing;
+                    command_ran = true;
                 }
                 ShellComandos::RestartDevice => {
-                    // TODO: lock other threads
                     let device = device_receiver.recv().unwrap();
                     if current_devices.contains(&device) {
                         let mut p = processes.remove(&device).unwrap();
@@ -101,9 +100,7 @@ fn scrcpy_creator(
                             }
                         };
                         processes.insert(device.to_string(), new_p);
-                        let mut c = comando.write().unwrap();
-                        *c = ShellComandos::Nothing;
-                        continue;
+                        command_ran = true;
                     }
                 }
                 ShellComandos::Quit => {
@@ -115,6 +112,14 @@ fn scrcpy_creator(
                 _ => (),
             },
             Err(_) => (),
+        }
+
+        // some workaround to deal with data updating
+        if command_ran {
+            let mut c = comando.write().unwrap();
+            *c = ShellComandos::Nothing;
+            command_ran = false;
+            continue;
         }
 
         let new_devices = match adb_receiver.try_recv() {
@@ -174,7 +179,7 @@ fn shell(device_sender: Sender<String>, comando: Arc<RwLock<ShellComandos>>) {
             "restart" => {
                 let mut c = comando.write().unwrap();
                 *c = ShellComandos::RestartDevice;
-                device_sender.send(composed_input[1].to_owned()).unwrap();
+                device_sender.send(composed_input[1].to_owned()).unwrap_or(());
             }
             _ => continue,
         }
